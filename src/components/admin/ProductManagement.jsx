@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/labal';
@@ -11,6 +12,7 @@ import { toast } from '../ui/use-toast';
 import { Plus, Edit, Trash2, Package } from 'lucide-react';
 
 const ProductManagement = () => {
+  const { t, dir } = useLanguage();
   const [products, setProducts] = useState([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -125,34 +127,34 @@ const ProductManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex justify-between items-center"
       >
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Product Management</h2>
-          <p className="text-gray-600">Add, edit, or remove products from your inventory</p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">{t.admin.productManagement.title}</h2>
+          <p className="text-gray-600">{t.admin.productManagement.subtitle}</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 transition-all duration-200">
               <Plus className="w-4 h-4 mr-2" />
-              Add Product
+              {t.admin.productManagement.addProduct}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
+              <DialogTitle>{t.admin.productManagement.addDialogTitle}</DialogTitle>
               <DialogDescription>
-                Fill in the product details below
+                {t.admin.productManagement.addDialogDesc}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddProduct} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="code">Item Code</Label>
+                  <Label htmlFor="code">{t.admin.productManagement.itemCode}</Label>
                   <Input
                     id="code"
                     value={formData.code}
@@ -161,7 +163,7 @@ const ProductManagement = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Product Name</Label>
+                  <Label htmlFor="name">{t.admin.productManagement.productName}</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -172,7 +174,7 @@ const ProductManagement = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="purchasePrice">Purchase Price ($)</Label>
+                  <Label htmlFor="purchasePrice">{t.admin.productManagement.purchasePrice}</Label>
                   <Input
                     id="purchasePrice"
                     type="number"
@@ -183,7 +185,7 @@ const ProductManagement = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sellingPrice">Selling Price ($)</Label>
+                  <Label htmlFor="sellingPrice">{t.admin.productManagement.sellingPrice}</Label>
                   <Input
                     id="sellingPrice"
                     type="number"
@@ -195,7 +197,7 @@ const ProductManagement = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
+                <Label htmlFor="quantity">{t.admin.productManagement.quantity}</Label>
                 <Input
                   id="quantity"
                   type="number"
@@ -205,7 +207,7 @@ const ProductManagement = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="image">Image URL</Label>
+                <Label htmlFor="image">{t.admin.productManagement.imageUrl}</Label>
                 <Input
                   id="image"
                   type="url"
@@ -216,10 +218,10 @@ const ProductManagement = () => {
               </div>
               <div className="flex justify-end space-x-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancel
+                  {t.admin.productManagement.cancel}
                 </Button>
                 <Button type="submit" className="bg-gradient-to-r from-blue-500 to-indigo-600">
-                  Add Product
+                  {t.admin.productManagement.add}
                 </Button>
               </div>
             </form>
@@ -231,10 +233,10 @@ const ProductManagement = () => {
         <Card>
           <CardContent className="text-center py-12">
             <Package className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500 text-lg mb-4">No products in inventory</p>
+            <p className="text-gray-500 text-lg mb-4">{t.admin.productManagement.emptyTitle}</p>
             <Button onClick={() => setIsAddDialogOpen(true)} className="bg-gradient-to-r from-blue-500 to-indigo-600">
               <Plus className="w-4 h-4 mr-2" />
-              Add Your First Product
+              {t.admin.productManagement.emptyButton}
             </Button>
           </CardContent>
         </Card>
@@ -259,20 +261,20 @@ const ProductManagement = () => {
                   <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
                     {product.name}
                   </h3>
-                  <p className="text-sm text-gray-500">Code: {product.code}</p>
+                  <p className="text-sm text-gray-500">{t.admin.productManagement.codeLabel}: {product.code}</p>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Purchase:</span>
+                      <span className="text-gray-600">{t.admin.productManagement.purchaseLabel}</span>
                       <span className="font-semibold">${product.purchasePrice.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Selling:</span>
+                      <span className="text-gray-600">{t.admin.productManagement.sellingLabel}</span>
                       <span className="font-semibold text-green-600">${product.sellingPrice.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Stock:</span>
+                      <span className="text-sm text-gray-600">{t.admin.productManagement.stockLabel}</span>
                       <Badge variant={product.quantity > 10 ? "default" : product.quantity > 0 ? "secondary" : "destructive"}>
-                        {product.quantity} units
+                        {product.quantity} {t.admin.productManagement.unitsSuffix}
                       </Badge>
                     </div>
                   </div>
@@ -283,7 +285,7 @@ const ProductManagement = () => {
                       className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all duration-200"
                     >
                       <Edit className="w-4 h-4 mr-1" />
-                      Edit
+                      {t.admin.productManagement.edit}
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -292,23 +294,23 @@ const ProductManagement = () => {
                           className="hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200"
                         >
                           <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
+                          {t.admin.productManagement.delete}
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogTitle>{t.admin.productManagement.confirmTitle}</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This will permanently delete {product.name} from your inventory.
+                            {t.admin.productManagement.confirmDescPrefix} {product.name} {t.admin.productManagement.confirmDescSuffix}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel>{t.admin.productManagement.cancel}</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => handleDeleteProduct(product.id)}
                             className="bg-red-600 hover:bg-red-700"
                           >
-                            Delete
+                            {t.admin.productManagement.delete}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -324,9 +326,9 @@ const ProductManagement = () => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
+            <DialogTitle>{t.admin.productManagement.updateDialogTitle}</DialogTitle>
             <DialogDescription>
-              Update the product details below
+              {t.admin.productManagement.updateDialogDesc}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditProduct} className="space-y-4">
@@ -399,7 +401,7 @@ const ProductManagement = () => {
                 Cancel
               </Button>
               <Button type="submit" className="bg-gradient-to-r from-blue-500 to-indigo-600">
-                Update Product
+                {t.admin.productManagement.update}
               </Button>
             </div>
           </form>

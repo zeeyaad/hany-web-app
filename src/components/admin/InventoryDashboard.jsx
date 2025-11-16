@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Package, TrendingUp, RotateCcw, DollarSign } from 'lucide-react';
 
 const InventoryDashboard = () => {
+  const { t, dir } = useLanguage();
   const [stats, setStats] = useState({
     totalItems: 0,
     totalSold: 0,
@@ -36,7 +38,7 @@ const InventoryDashboard = () => {
 
   const statCards = [
     {
-      title: 'Total Items in Stock',
+      title: t.admin.inventory.stats.totalItems,
       value: stats.totalItems,
       icon: Package,
       color: 'from-blue-500 to-blue-600',
@@ -44,7 +46,7 @@ const InventoryDashboard = () => {
       textColor: 'text-blue-600'
     },
     {
-      title: 'Total Units Sold',
+      title: t.admin.inventory.stats.totalSold,
       value: stats.totalSold,
       icon: TrendingUp,
       color: 'from-green-500 to-green-600',
@@ -52,7 +54,7 @@ const InventoryDashboard = () => {
       textColor: 'text-green-600'
     },
     {
-      title: 'Total Refunds',
+      title: t.admin.inventory.stats.totalRefunds,
       value: stats.totalRefunds,
       icon: RotateCcw,
       color: 'from-orange-500 to-orange-600',
@@ -60,8 +62,8 @@ const InventoryDashboard = () => {
       textColor: 'text-orange-600'
     },
     {
-      title: 'Total Profit',
-      value: `$${stats.totalProfit.toFixed(2)}`,
+      title: t.admin.inventory.stats.totalProfit,
+      value: `${stats.totalProfit.toFixed(2)}`,
       icon: DollarSign,
       color: 'from-purple-500 to-purple-600',
       bgColor: 'bg-purple-50',
@@ -70,13 +72,13 @@ const InventoryDashboard = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Inventory Overview</h2>
-        <p className="text-gray-600">Monitor your shop's performance and inventory status</p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">{t.admin.inventory.overviewTitle}</h2>
+        <p className="text-gray-600">{t.admin.inventory.overviewSubtitle}</p>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

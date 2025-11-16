@@ -2,17 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { toast } from '../components/ui/use-toast';
-import { Store, LogOut, Search, ShoppingCart, RotateCcw, Package } from 'lucide-react';
+import { Store, LogOut, Search, ShoppingCart, RotateCcw, Package, Languages } from 'lucide-react';
 
 const StaffDashboard = () => {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const { t, dir, language, setLanguage } = useLanguage();
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -109,10 +111,11 @@ const StaffDashboard = () => {
   return (
     <>
       <Helmet>
-        <title>Staff Dashboard - Hany's Shop</title>
-        <meta name="description" content="Process sales and refunds for Hany's Shop." />
+        <html lang={language} dir={dir} />
+        <title>{t.staff.title}</title>
+        <meta name="description" content={t.staff.description} />
       </Helmet>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-green-50" dir={dir}>
         <nav className="bg-white shadow-md sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
@@ -126,9 +129,9 @@ const StaffDashboard = () => {
                 </div>
                 <div>
                   <span className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                    Hany's Shop
+                    {t.staff.brand}
                   </span>
-                  <p className="text-xs text-gray-500">Staff Panel</p>
+                  <p className="text-xs text-gray-500">{t.staff.panelLabel}</p>
                 </div>
               </motion.div>
               <motion.div
@@ -136,14 +139,22 @@ const StaffDashboard = () => {
                 animate={{ opacity: 1, x: 0 }}
                 className="flex items-center space-x-4"
               >
-                <span className="text-sm text-gray-600">Welcome, <span className="font-semibold">{user?.username}</span></span>
+                <span className="text-sm text-gray-600">{t.staff.welcome} <span className="font-semibold">{user?.username}</span></span>
+                <Button
+                  variant="ghost"
+                  onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+                  className="text-sm"
+                >
+                  <Languages className="w-4 h-4 mr-2" />
+                  {language.toUpperCase()}
+                </Button>
                 <Button 
                   onClick={handleLogout}
                   variant="outline"
                   className="hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+                  {t.staff.logout}
                 </Button>
               </motion.div>
             </div>
@@ -160,7 +171,7 @@ const StaffDashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center text-2xl">
                   <Search className="w-6 h-6 mr-2 text-green-600" />
-                  Search Products
+                  {t.staff.searchTitle}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -168,7 +179,7 @@ const StaffDashboard = () => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <Input
                     type="text"
-                    placeholder="Search by name or code..."
+                    placeholder={t.staff.searchPlaceholder}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 h-12 text-lg"
@@ -181,7 +192,7 @@ const StaffDashboard = () => {
               <Card>
                 <CardContent className="text-center py-12">
                   <Package className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                  <p className="text-gray-500 text-lg">No products found</p>
+                  <p className="text-gray-500 text-lg">{t.staff.noProducts}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -205,13 +216,13 @@ const StaffDashboard = () => {
                         <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
                           {product.name}
                         </h3>
-                        <p className="text-sm text-gray-500">Code: {product.code}</p>
+                        <p className="text-sm text-gray-500">{t.staff.codeLabel}: {product.code}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-xl font-bold text-green-600">
                             ${product.sellingPrice.toFixed(2)}
                           </span>
                           <Badge variant={product.quantity > 10 ? "default" : product.quantity > 0 ? "secondary" : "destructive"}>
-                            Stock: {product.quantity}
+                            {t.staff.stockLabel}: {product.quantity}
                           </Badge>
                         </div>
                         <div className="grid grid-cols-2 gap-2 pt-2">
@@ -221,7 +232,7 @@ const StaffDashboard = () => {
                             className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all duration-200"
                           >
                             <ShoppingCart className="w-4 h-4 mr-1" />
-                            Sell
+                            {t.staff.sellButton}
                           </Button>
                           <Button
                             onClick={() => handleRefund(product.id)}
@@ -229,7 +240,7 @@ const StaffDashboard = () => {
                             className="hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-all duration-200"
                           >
                             <RotateCcw className="w-4 h-4 mr-1" />
-                            Refund
+                            {t.staff.refundButton}
                           </Button>
                         </div>
                       </CardContent>
