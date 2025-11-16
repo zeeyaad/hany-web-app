@@ -18,6 +18,7 @@ const PublicShop = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('all');
   const [sortOption, setSortOption] = useState('newest');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { language, setLanguage, t, dir } = useLanguage();
@@ -122,22 +123,66 @@ const PublicShop = () => {
                   </span>
                 </motion.div>
               </Link>
+
+              {/* Desktop Nav */}
               <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                 <Link to="/" className="text-gray-600 hover:text-blue-600 transition-colors">{t.header.home}</Link>
                 <button onClick={() => handleScroll(aboutRef)} className="text-gray-600 hover:text-blue-600 transition-colors">{t.header.about}</button>
                 <button onClick={() => handleScroll(contactRef)} className="text-gray-600 hover:text-blue-600 transition-colors">{t.header.contact}</button>
                 <button onClick={() => handleScroll(productsRef)} className="text-gray-600 hover:text-blue-600 transition-colors">{t.header.explore}</button>
               </nav>
-              <div className="flex items-center gap-2">
+
+              {/* Desktop Actions */}
+              <div className="hidden md:flex items-center gap-2">
                  <Button variant="ghost" size="icon" onClick={toggleLanguage}>
                     <Languages className="h-5 w-5" />
                  </Button>
                  <ShoppingCartComponent />
-                 <Button onClick={() => navigate('/login')} className="hidden sm:flex">
+                 <Button onClick={() => navigate('/login')}>
                     <LogIn className={dir === 'rtl' ? 'ml-2' : 'mr-2'} /> {t.header.login}
                  </Button>
               </div>
+
+              {/* Mobile Menu Button */}
+              <div className="md:hidden flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={toggleLanguage}>
+                  <Languages className="h-5 w-5" />
+                </Button>
+                <ShoppingCartComponent />
+                <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {isMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </Button>
+              </div>
             </div>
+
+            {/* Mobile Menu */}
+            <AnimatePresence>
+              {isMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="md:hidden overflow-hidden"
+                >
+                  <nav className="flex flex-col gap-4 py-4 text-sm font-medium">
+                    <Link to="/" onClick={() => setIsMenuOpen(false)} className="text-gray-600 hover:text-blue-600 transition-colors">{t.header.home}</Link>
+                    <button onClick={() => { handleScroll(aboutRef); setIsMenuOpen(false); }} className="text-left text-gray-600 hover:text-blue-600 transition-colors">{t.header.about}</button>
+                    <button onClick={() => { handleScroll(contactRef); setIsMenuOpen(false); }} className="text-left text-gray-600 hover:text-blue-600 transition-colors">{t.header.contact}</button>
+                    <button onClick={() => { handleScroll(productsRef); setIsMenuOpen(false); }} className="text-left text-gray-600 hover:text-blue-600 transition-colors">{t.header.explore}</button>
+                    <Button onClick={() => { navigate('/login'); setIsMenuOpen(false); }} className="w-full">
+                      <LogIn className={dir === 'rtl' ? 'ml-2' : 'mr-2'} /> {t.header.login}
+                    </Button>
+                  </nav>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </header>
 
