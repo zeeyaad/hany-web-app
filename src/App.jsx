@@ -30,7 +30,7 @@ function App() {
     <LanguageProvider>
       <AuthProvider>
         <CartProvider>
-          <Router>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Helmet>
               <title>Hany's Shop - Home & House Items</title>
               <meta name="description" content="Browse and purchase quality home and house items at Hany's Shop. Wide selection of products with competitive prices." />
