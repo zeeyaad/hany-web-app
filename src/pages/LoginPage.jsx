@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -11,53 +11,63 @@ import { toast } from '../components/ui/use-toast';
 import { Store, Lock, User } from 'lucide-react';
 
 const LoginPage = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, user } = useAuth();
+  const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { user, login } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const users = JSON.parse(localStorage.getItem('hanyshop_users') || '[]');
-    if (users.length === 0) {
-      const defaultUsers = [
-        { username: 'admin', password: 'admin123', role: 'admin' },
-        { username: 'staff', password: 'staff123', role: 'staff' }
-      ];
-      localStorage.setItem('hanyshop_users', JSON.stringify(defaultUsers));
-    }
-  }, []);
+  const apiPostJSON = null;
 
   useEffect(() => {
-    if (user) {
-      if (user.role === 'admin') {
-        navigate('/admin');
-      } else if (user.role === 'staff') {
-        navigate('/staff');
+    if (user && user.role) {
+      if (user.role === 'admin') navigate('/admin');
+      else if (user.role === 'staff') navigate('/staff');
+    } else {
+      const stored = localStorage.getItem('hanyshop_user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.role === 'admin') navigate('/admin');
+        else if (parsed?.role === 'staff') navigate('/staff');
       }
     }
   }, [user, navigate]);
 
-  const handleLogin = (e) => {
+  const validate = () => {
+    const nextErrors = {};
+    const emailPattern = /.+@.+\..+/;
+    if (!email.trim()) nextErrors.email = 'Email is required';
+    else if (!emailPattern.test(email.trim())) nextErrors.email = 'Enter a valid email';
+    if (!password.trim()) nextErrors.password = 'Password is required';
+    else if (password.length < 6) nextErrors.password = 'Password must be at least 6 characters';
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const result = login(username, password);
-    
-    if (result.success) {
-      toast({
-        title: "Login Successful",
-        description: `Welcome back, ${username}!`,
-      });
-      
-      if (result.role === 'admin') {
-        navigate('/admin');
-      } else if (result.role === 'staff') {
-        navigate('/staff');
+    setApiError('');
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      const result = await login(email.trim(), password);
+      if (!result.success) {
+        throw new Error(result.message || 'Login failed');
       }
-    } else {
-      toast({
-        title: "Login Failed",
-        description: result.message,
-        variant: "destructive",
-      });
+      const profile = result.user;
+      toast({ title: 'Login Successful', description: `Welcome back, ${profile.name}` });
+      setPassword('');
+      if (profile.role === 'admin') navigate('/admin');
+      else if (profile.role === 'staff') navigate('/staff');
+      else navigate('/');
+    } catch (err) {
+      setApiError(err.message || 'Login failed');
+      toast({ title: 'Login Failed', description: err.message || 'Unable to login', variant: 'destructive' });
+      setPassword('');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -93,19 +103,27 @@ const LoginPage = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-6">
+                {apiError && (
+                  <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    {apiError}
+                  </div>
+                )}
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="text-sm font-medium">Username</Label>
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
-                      id="username"
-                      type="text"
-                      placeholder="Enter username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      id="email"
+                      type="email"
+                      placeholder="Enter email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="pl-10 h-11 transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-                      required
+                      aria-invalid={Boolean(errors.email)}
                     />
+                    {errors.email && (
+                      <p className="mt-1 text-xs text-red-600">{errors.email}</p>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -119,15 +137,19 @@ const LoginPage = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10 h-11 transition-all duration-200 focus:ring-2 focus:ring-blue-500"
-                      required
+                      aria-invalid={Boolean(errors.password)}
                     />
+                    {errors.password && (
+                      <p className="mt-1 text-xs text-red-600">{errors.password}</p>
+                    )}
                   </div>
                 </div>
                 <Button 
                   type="submit" 
                   className="w-full h-11 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  disabled={loading}
                 >
-                  Sign In
+                  {loading ? 'Signing In...' : 'Sign In'}
                 </Button>
               </form>
               <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">

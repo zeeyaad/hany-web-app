@@ -12,8 +12,10 @@ import AdminDashboard from './pages/AdminDashboard';
 import StaffDashboard from './pages/StaffDashboard';
 
 function ProtectedRoute({ children, allowedRoles }) {
-  const { user } = useAuth();
-  
+  const { user, loading } = useAuth();
+  if (loading) {
+    return null;
+  }
   if (!user) {
     return <Navigate to="/login" replace />;
   }

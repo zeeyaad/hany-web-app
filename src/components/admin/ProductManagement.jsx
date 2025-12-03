@@ -17,6 +17,8 @@ const ProductManagement = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [addImageFile, setAddImageFile] = useState(null);
+  const [editImageFile, setEditImageFile] = useState(null);
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -25,14 +27,25 @@ const ProductManagement = () => {
     quantity: '',
     image: ''
   });
+  const galleryImages = [
+    'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1493666438817-866a91353ca9?w=400&h=300&fit=crop'
+  ];
 
   useEffect(() => {
     loadProducts();
   }, []);
 
-  const loadProducts = () => {
-    const storedProducts = JSON.parse(localStorage.getItem('hanyshop_products') || '[]');
-    setProducts(storedProducts);
+  const loadProducts = async () => {
+    try {
+      const res = await fetch('http://localhost:4000/api/products');
+      const data = await res.json();
+      setProducts(Array.isArray(data) ? data : []);
+    } catch {
+      setProducts([]);
+    }
   };
 
   const resetForm = () => {
@@ -44,84 +57,107 @@ const ProductManagement = () => {
       quantity: '',
       image: ''
     });
+    setAddImageFile(null);
   };
 
-  const handleAddProduct = (e) => {
+  const handleAddProduct = async (e) => {
     e.preventDefault();
-    
-    const newProduct = {
-      id: Date.now(),
-      code: formData.code,
+    const token = localStorage.getItem('hanyshop_token');
+    const fd = new FormData();
+    fd.append('item_code', formData.code);
+    fd.append('name', formData.name);
+    fd.append('purchase_price', String(parseFloat(formData.purchasePrice || '0')));
+    fd.append('selling_price', String(parseFloat(formData.sellingPrice || '0')));
+    fd.append('quantity', String(parseInt(formData.quantity || '0')));
+    if (addImageFile) fd.append('image', addImageFile);
+    try {
+      const res = await fetch('http://localhost:4000/api/products', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: fd
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || 'Error creating product');
+      }
+      toast({ title: 'Product Added', description: `${formData.name} has been added successfully.` });
+      await loadProducts();
+      resetForm();
+      setIsAddDialogOpen(false);
+    } catch (err) {
+      toast({ title: 'Error', description: err.message || 'Failed to add product', variant: 'destructive' });
+    }
+  };
+
+  const handleEditProduct = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('hanyshop_token');
+    const payload = {
+      item_code: formData.code,
       name: formData.name,
-      purchasePrice: parseFloat(formData.purchasePrice),
-      sellingPrice: parseFloat(formData.sellingPrice),
-      quantity: parseInt(formData.quantity),
-      image: formData.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop'
+      purchase_price: parseFloat(formData.purchasePrice || '0'),
+      selling_price: parseFloat(formData.sellingPrice || '0'),
+      quantity: parseInt(formData.quantity || '0')
     };
-
-    const updatedProducts = [...products, newProduct];
-    setProducts(updatedProducts);
-    localStorage.setItem('hanyshop_products', JSON.stringify(updatedProducts));
-    
-    toast({
-      title: "Product Added",
-      description: `${newProduct.name} has been added successfully.`,
-    });
-    
-    resetForm();
-    setIsAddDialogOpen(false);
+    // if user chose a new image file, upload it first to get a URL
+    if (editImageFile) {
+      try {
+        const uploadFd = new FormData();
+        uploadFd.append('image', editImageFile);
+        const upRes = await fetch('http://localhost:4000/api/upload', { method: 'POST', body: uploadFd });
+        const upData = await upRes.json();
+        if (upRes.ok && upData?.url) payload.image_url = upData.url;
+      } catch {}
+    }
+    try {
+      const res = await fetch(`http://localhost:4000/api/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: token ? { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } : { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.message || 'Error updating product');
+      }
+      toast({ title: 'Product Updated', description: `${data.name || formData.name} has been updated successfully.` });
+      await loadProducts();
+      resetForm();
+      setIsEditDialogOpen(false);
+      setEditingProduct(null);
+      setEditImageFile(null);
+    } catch (err) {
+      toast({ title: 'Error', description: err.message || 'Failed to update product', variant: 'destructive' });
+    }
   };
 
-  const handleEditProduct = (e) => {
-    e.preventDefault();
-    
-    const updatedProducts = products.map(p => 
-      p.id === editingProduct.id 
-        ? {
-            ...p,
-            code: formData.code,
-            name: formData.name,
-            purchasePrice: parseFloat(formData.purchasePrice),
-            sellingPrice: parseFloat(formData.sellingPrice),
-            quantity: parseInt(formData.quantity),
-            image: formData.image
-          }
-        : p
-    );
-    
-    setProducts(updatedProducts);
-    localStorage.setItem('hanyshop_products', JSON.stringify(updatedProducts));
-    
-    toast({
-      title: "Product Updated",
-      description: `${formData.name} has been updated successfully.`,
-    });
-    
-    resetForm();
-    setIsEditDialogOpen(false);
-    setEditingProduct(null);
-  };
-
-  const handleDeleteProduct = (productId) => {
-    const updatedProducts = products.filter(p => p.id !== productId);
-    setProducts(updatedProducts);
-    localStorage.setItem('hanyshop_products', JSON.stringify(updatedProducts));
-    
-    toast({
-      title: "Product Deleted",
-      description: "Product has been removed from inventory.",
-    });
+  const handleDeleteProduct = async (productId) => {
+    const token = localStorage.getItem('hanyshop_token');
+    try {
+      const res = await fetch(`http://localhost:4000/api/products/${productId}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined
+      });
+      if (res.status !== 204) {
+        let msg = 'Error deleting product';
+        try { const d = await res.json(); msg = d?.message || msg; } catch {}
+        throw new Error(msg);
+      }
+      toast({ title: 'Product Deleted', description: 'Product has been removed from inventory.' });
+      await loadProducts();
+    } catch (err) {
+      toast({ title: 'Error', description: err.message || 'Failed to delete product', variant: 'destructive' });
+    }
   };
 
   const openEditDialog = (product) => {
     setEditingProduct(product);
     setFormData({
-      code: product.code,
+      code: product.item_code || product.code,
       name: product.name,
-      purchasePrice: product.purchasePrice.toString(),
-      sellingPrice: product.sellingPrice.toString(),
-      quantity: product.quantity.toString(),
-      image: product.image
+      purchasePrice: String(product.purchase_price ?? product.purchasePrice),
+      sellingPrice: String(product.selling_price ?? product.sellingPrice),
+      quantity: String(product.quantity),
+      image: product.image_url || product.image
     });
     setIsEditDialogOpen(true);
   };
@@ -207,14 +243,29 @@ const ProductManagement = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="image">{t.admin.productManagement.imageUrl}</Label>
-                <Input
-                  id="image"
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) => setFormData({...formData, image: e.target.value})}
-                  placeholder="https://example.com/image.jpg"
+                <Label>{t.admin.productManagement.imageUrl}</Label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setAddImageFile(e.target.files?.[0] || null)}
                 />
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {galleryImages.map((src) => (
+                    <button
+                      key={src}
+                      type="button"
+                      onClick={async () => {
+                        const r = await fetch(src);
+                        const b = await r.blob();
+                        const f = new File([b], `gallery-${Date.now()}.jpg`, { type: b.type || 'image/jpeg' });
+                        setAddImageFile(f);
+                      }}
+                      className="border rounded overflow-hidden"
+                    >
+                      <img src={src} alt="" className="w-full h-16 object-cover" />
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="flex justify-end space-x-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -252,7 +303,14 @@ const ProductManagement = () => {
               <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
                   <img 
-                    src={product.image} 
+                    src={
+                      (() => {
+                        const raw = product.image_url || product.image;
+                        if (!raw) return 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop';
+                        if (String(raw).startsWith('http')) return raw;
+                        return `http://localhost:4000${raw}`;
+                      })()
+                    } 
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />
@@ -261,15 +319,15 @@ const ProductManagement = () => {
                   <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">
                     {product.name}
                   </h3>
-                  <p className="text-sm text-gray-500">{t.admin.productManagement.codeLabel}: {product.code}</p>
+                  <p className="text-sm text-gray-500">{t.admin.productManagement.codeLabel}: {product.item_code || product.code}</p>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">{t.admin.productManagement.purchaseLabel}</span>
-                      <span className="font-semibold">${product.purchasePrice.toFixed(2)}</span>
+                      <span className="font-semibold">${Number(product.purchase_price ?? product.purchasePrice).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">{t.admin.productManagement.sellingLabel}</span>
-                      <span className="font-semibold text-green-600">${product.sellingPrice.toFixed(2)}</span>
+                      <span className="font-semibold text-green-600">${Number(product.selling_price ?? product.sellingPrice).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">{t.admin.productManagement.stockLabel}</span>
@@ -387,14 +445,29 @@ const ProductManagement = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-image">Image URL</Label>
-              <Input
-                id="edit-image"
-                type="url"
-                value={formData.image}
-                onChange={(e) => setFormData({...formData, image: e.target.value})}
-                placeholder="https://example.com/image.jpg"
+              <Label>{t.admin.productManagement.imageUrl}</Label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setEditImageFile(e.target.files?.[0] || null)}
               />
+              <div className="grid grid-cols-4 gap-2 mt-2">
+                {galleryImages.map((src) => (
+                  <button
+                    key={src}
+                    type="button"
+                    onClick={async () => {
+                      const r = await fetch(src);
+                      const b = await r.blob();
+                      const f = new File([b], `gallery-${Date.now()}.jpg`, { type: b.type || 'image/jpeg' });
+                      setEditImageFile(f);
+                    }}
+                    className="border rounded overflow-hidden"
+                  >
+                    <img src={src} alt="" className="w-full h-16 object-cover" />
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
