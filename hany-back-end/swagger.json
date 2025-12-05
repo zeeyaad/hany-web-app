@@ -1,0 +1,58 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "Hany's Shop API", "version": "1.0.0" },
+  "servers": [{ "url": "http://localhost:4000" }],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "item_code": { "type": "string" },
+          "name": { "type": "string" },
+          "purchase_price": { "type": "number" },
+          "selling_price": { "type": "number" },
+          "quantity": { "type": "integer" },
+          "image_url": { "type": "string", "nullable": true }
+        },
+        "required": ["id","item_code","name","purchase_price","selling_price","quantity"]
+      }
+    }
+  },
+  "paths": {
+    "/api/products": {
+      "get": {
+        "summary": "List products",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" } },
+          { "name": "available", "in": "query", "schema": { "type": "string", "enum": ["true","false"] } }
+        ],
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } } } } } }
+      },
+      "post": {
+        "summary": "Create product",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "content": { "multipart/form-data": { "schema": { "type": "object", "properties": { "item_code": {"type":"string"}, "name": {"type":"string"}, "purchase_price": {"type":"number"}, "selling_price": {"type":"number"}, "quantity": {"type":"integer"}, "image": {"type":"string","format":"binary"} }, "required": ["item_code","name","purchase_price","selling_price","quantity"] } } } },
+        "responses": { "200": { "description": "Created", "content": { "application/json": { "schema": { "type": "object", "properties": { "message": {"type":"string"}, "id": {"type":"string"} } } } } } }
+      }
+    },
+    "/api/products/{id}": {
+      "put": {
+        "summary": "Update product",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "item_code": {"type":"string"}, "name": {"type":"string"}, "purchase_price": {"type":"number"}, "selling_price": {"type":"number"}, "quantity": {"type":"integer"}, "image_url": {"type":"string"} } } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } }, "404": { "description": "Not Found" }, "400": { "description": "Bad Request" } }
+      },
+      "delete": {
+        "summary": "Delete product",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "204": { "description": "No Content" }, "404": { "description": "Not Found" } }
+      }
+    }
+  }
+}
